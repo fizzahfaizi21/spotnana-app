@@ -88,6 +88,55 @@
   color: #111827;
 }
 
+.timelineBox {
+  margin-top: 12px;
+  background: rgba(17, 24, 39, 0.03);
+  border: 1px solid rgba(17, 24, 39, 0.12);
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.timelineHeader {
+  font-size: 13px;
+  font-weight: 700;
+  color: rgba(17, 24, 39, 0.85);
+  margin: 0 0 10px 0;
+}
+
+.timelineList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.timelineItem {
+  border-radius: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  background: rgba(255, 255, 255, 0.7);
+  padding: 10px 10px;
+}
+
+.timelineTime {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: rgba(17, 24, 39, 0.82);
+  margin-bottom: 4px;
+}
+
+.timelineTitle {
+  font-size: 14px;
+  font-weight: 800;
+  color: #111827;
+  margin-bottom: 3px;
+}
+
+.timelineMeta {
+  font-size: 13px;
+  color: rgba(17, 24, 39, 0.78);
+  line-height: 1.4;
+}
+
 .loadingText {
   font-size: 14px;
   color: rgba(17, 24, 39, 0.85);
