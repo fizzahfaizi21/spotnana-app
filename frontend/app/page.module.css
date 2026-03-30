@@ -17,7 +17,7 @@
 
 .title {
   margin: 0 0 14px 0;
-  font-size: 24px;
+  font-size: clamp(20px, 3.2vw, 28px);
   line-height: 1.2;
   font-weight: 700;
   color: #111827;
@@ -51,6 +51,87 @@
 .actions {
   display: flex;
   justify-content: flex-end;
+}
+
+.statusRow {
+  margin-top: 12px;
+}
+
+.error {
+  color: #b91c1c;
+  background: rgba(185, 28, 28, 0.08);
+  border: 1px solid rgba(185, 28, 28, 0.25);
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 14px;
+}
+
+.responseBox {
+  margin-top: 14px;
+  background: rgba(59, 130, 246, 0.06);
+  border: 1px solid rgba(59, 130, 246, 0.18);
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.responseTitle {
+  font-size: 13px;
+  font-weight: 700;
+  color: rgba(17, 24, 39, 0.85);
+  margin: 0 0 8px 0;
+}
+
+.responseText {
+  white-space: pre-wrap;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #111827;
+}
+
+.loadingText {
+  font-size: 14px;
+  color: rgba(17, 24, 39, 0.85);
+}
+
+.loadingRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.spinner {
+  width: 18px;
+  height: 18px;
+  border-radius: 9999px;
+  border: 3px solid rgba(17, 24, 39, 0.16);
+  border-top-color: rgba(17, 24, 39, 0.82);
+  animation: spin 0.85s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@media (max-width: 520px) {
+  .page {
+    padding: 12px;
+    align-items: stretch;
+    justify-content: flex-start;
+  }
+
+  .container {
+    padding: 16px;
+  }
 }
 
 .button {
