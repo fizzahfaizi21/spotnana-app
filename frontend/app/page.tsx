@@ -10,17 +10,52 @@ type TimelineItem = {
   location?: string;
 };
 
+const INTEREST_OPTIONS = [
+  "Food",
+  "Coffee",
+  "Museums",
+  "Art",
+  "Nature",
+  "Shopping",
+  "Nightlife",
+  "History",
+  "Family-friendly",
+];
+
 export default function Home() {
-  const [prompt, setPrompt] = useState("");
+  const [destination, setDestination] = useState("");
+  const [selectedInterest, setSelectedInterest] = useState("");
+  const [interests, setInterests] = useState<string[]>([]);
   const [response, setResponse] = useState("");
   const [timeline, setTimeline] = useState<TimelineItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  function addInterest(value: string) {
+    if (!value) return;
+    if (interests.includes(value)) return;
+    if (interests.length >= 3) {
+      setError("You can select up to 3 interests.");
+      return;
+    }
+    setError(null);
+    setInterests((prev) => [...prev, value]);
+    setSelectedInterest("");
+  }
+
+  function removeInterest(value: string) {
+    setInterests((prev) => prev.filter((item) => item !== value));
+  }
+
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (!prompt.trim()) {
-      setError("Please enter a prompt.");
+    if (!destination.trim()) {
+      setError("Please enter a destination.");
+      return;
+    }
+
+    if (interests.length === 0) {
+      setError("Please choose at least 1 interest.");
       return;
     }
 
@@ -30,6 +65,10 @@ export default function Home() {
     setLoading(true);
 
     try {
+      const prompt = `Create a full-day itinerary for ${destination}. Interests: ${interests.join(
+        ", "
+      )}.`;
+
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: {
@@ -39,16 +78,25 @@ export default function Home() {
       });
 
       const data:
-        | { error?: string; responseText?: string; timeline?: unknown }
+        | {
+            error?: string;
+            details?: string;
+            responseText?: string;
+            timeline?: unknown;
+          }
         | null = await res.json().catch(() => null);
 
       if (!res.ok) {
-        setError(data?.error || "Request failed.");
+        setError(
+          data?.details ||
+            data?.error ||
+            "Request failed."
+        );
         return;
       }
 
       if (data?.error) {
-        setError(data.error);
+        setError(data.details || data.error);
         return;
       }
 
@@ -88,19 +136,65 @@ export default function Home() {
   return (
     <div className={styles.page}>
       <div className={styles.container}>
-        <h1 className={styles.title}>AI Prompt</h1>
+        <h1 className={styles.title}>Travel Spotnana</h1>
+        <p className={styles.subtitle}>
+          Enter a destination and choose up to 3 interests. We will generate a
+          recommended day itinerary.
+        </p>
 
         <form className={styles.form} onSubmit={handleSubmit}>
+          <input
+            className={styles.input}
+            placeholder="Destination city (e.g., Tokyo)"
+            value={destination}
+            onChange={(e) => setDestination(e.target.value)}
+          />
+
+          <div className={styles.dropdownRow}>
+            <select
+              className={styles.select}
+              value={selectedInterest}
+              onChange={(e) => setSelectedInterest(e.target.value)}
+            >
+              <option value="">Select an interest</option>
+              {INTEREST_OPTIONS.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              className={styles.secondaryButton}
+              onClick={() => addInterest(selectedInterest)}
+              disabled={!selectedInterest || interests.length >= 3}
+            >
+              Add interest
+            </button>
+          </div>
+
+          <div className={styles.chipList}>
+            {interests.map((interest) => (
+              <button
+                key={interest}
+                type="button"
+                className={styles.chip}
+                onClick={() => removeInterest(interest)}
+                title="Remove interest"
+              >
+                {interest} ×
+              </button>
+            ))}
+          </div>
+
           <textarea
             className={styles.textarea}
-            placeholder="Type your prompt..."
-            value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
+            placeholder="Optional extra notes for the AI (budget, pace, etc.)"
           />
 
           <div className={styles.actions}>
             <button className={styles.button} type="submit" disabled={loading}>
-              Submit
+              Generate itinerary
             </button>
           </div>
         </form>
@@ -117,7 +211,7 @@ export default function Home() {
 
           {response ? (
             <div className={styles.responseBox}>
-              <div className={styles.responseTitle}>Response</div>
+              <div className={styles.responseTitle}>AI Summary</div>
               <div className={styles.responseText}>{response}</div>
             </div>
           ) : null}
