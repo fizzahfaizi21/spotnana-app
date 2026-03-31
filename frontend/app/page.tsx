@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import styles from "./page.module.css";
 
 type TimelineItem = {
@@ -30,6 +30,8 @@ export default function Home() {
   const [timeline, setTimeline] = useState<TimelineItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /** Blocks duplicate submits before React re-renders (double-click / Enter spam). */
+  const inFlightRef = useRef(false);
 
   function addInterest(value: string) {
     if (!value) return;
@@ -49,6 +51,8 @@ export default function Home() {
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (inFlightRef.current) return;
+
     if (!destination.trim()) {
       setError("Please enter a destination.");
       return;
@@ -58,6 +62,8 @@ export default function Home() {
       setError("Please choose at least 1 interest.");
       return;
     }
+
+    inFlightRef.current = true;
 
     setError(null);
     setResponse("");
@@ -129,6 +135,7 @@ export default function Home() {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Request failed.");
     } finally {
+      inFlightRef.current = false;
       setLoading(false);
     }
   }
@@ -142,7 +149,11 @@ export default function Home() {
           recommended day itinerary.
         </p>
 
-        <form className={styles.form} onSubmit={handleSubmit}>
+        <form
+          className={styles.form}
+          onSubmit={handleSubmit}
+          aria-busy={loading}
+        >
           <input
             className={styles.input}
             placeholder="Destination city (e.g., Tokyo)"
@@ -193,8 +204,13 @@ export default function Home() {
           />
 
           <div className={styles.actions}>
-            <button className={styles.button} type="submit" disabled={loading}>
-              Generate itinerary
+            <button
+              className={styles.button}
+              type="submit"
+              disabled={loading}
+              aria-disabled={loading}
+            >
+              {loading ? "Loading…" : "Generate itinerary"}
             </button>
           </div>
         </form>
