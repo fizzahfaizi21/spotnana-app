@@ -157,7 +157,34 @@
 
 .actions {
   display: flex;
-  justify-content: flex-end;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.clearButton {
+  appearance: none;
+  border: 1px solid rgba(148, 163, 184, 0.45);
+  background: rgba(30, 41, 59, 0.9);
+  color: #e2e8f0;
+  padding: 14px 18px;
+  border-radius: 10px;
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.clearButton:hover:not(:disabled) {
+  background: rgba(51, 65, 85, 0.95);
+  border-color: rgba(148, 163, 184, 0.65);
+}
+
+.clearButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .statusRow {
@@ -306,6 +333,16 @@
     width: 100%;
     text-align: center;
   }
+
+  .actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .clearButton,
+  .button {
+    width: 100%;
+  }
 }
 
 .button {
@@ -338,10 +375,6 @@
 }
 
 .historyHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
   margin-bottom: 14px;
 }
 
@@ -350,22 +383,6 @@
   font-size: 22px;
   font-weight: 800;
   color: #f8fafc;
-}
-
-.historyClear {
-  appearance: none;
-  border: 1px solid rgba(248, 113, 113, 0.45);
-  background: rgba(127, 29, 29, 0.35);
-  color: #fecaca;
-  padding: 10px 14px;
-  border-radius: 10px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.historyClear:hover {
-  background: rgba(127, 29, 29, 0.5);
 }
 
 .historyList {

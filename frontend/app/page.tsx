@@ -176,9 +176,17 @@ export default function Home() {
     setError(null);
   }
 
-  function handleClearHistory() {
+  function handleClear() {
+    if (loading) return;
+    setResponse("");
+    setTimeline([]);
+    setError(null);
     setHistory([]);
     clearChatHistoryStorage();
+    setDestination("");
+    setNotes("");
+    setInterests([]);
+    setSelectedInterest("");
   }
 
   return (
@@ -248,6 +256,15 @@ export default function Home() {
 
           <div className={styles.actions}>
             <button
+              type="button"
+              className={styles.clearButton}
+              onClick={handleClear}
+              disabled={loading}
+              aria-label="Clear response and chat history"
+            >
+              Clear
+            </button>
+            <button
               className={styles.button}
               type="submit"
               disabled={loading}
@@ -301,13 +318,6 @@ export default function Home() {
           <section className={styles.historySection} aria-label="Past itineraries">
             <div className={styles.historyHeader}>
               <h2 className={styles.historyTitle}>Past itineraries</h2>
-              <button
-                type="button"
-                className={styles.historyClear}
-                onClick={handleClearHistory}
-              >
-                Clear history
-              </button>
             </div>
             <ul className={styles.historyList}>
               {history.map((entry) => (
