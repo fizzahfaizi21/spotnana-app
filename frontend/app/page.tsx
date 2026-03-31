@@ -1,14 +1,15 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import styles from "./page.module.css";
-
-type TimelineItem = {
-  time: string;
-  title: string;
-  description?: string;
-  location?: string;
-};
+import {
+  type ChatHistoryEntry,
+  clearChatHistoryStorage,
+  loadChatHistory,
+  MAX_CHAT_HISTORY_ENTRIES,
+  type TimelineItem,
+  saveChatHistory,
+} from "../lib/chatHistory";
 
 const INTEREST_OPTIONS = [
   "Food",
@@ -24,14 +25,20 @@ const INTEREST_OPTIONS = [
 
 export default function Home() {
   const [destination, setDestination] = useState("");
+  const [notes, setNotes] = useState("");
   const [selectedInterest, setSelectedInterest] = useState("");
   const [interests, setInterests] = useState<string[]>([]);
   const [response, setResponse] = useState("");
   const [timeline, setTimeline] = useState<TimelineItem[]>([]);
+  const [history, setHistory] = useState<ChatHistoryEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   /** Blocks duplicate submits before React re-renders (double-click / Enter spam). */
   const inFlightRef = useRef(false);
+
+  useEffect(() => {
+    setHistory(loadChatHistory());
+  }, []);
 
   function addInterest(value: string) {
     if (!value) return;
@@ -71,9 +78,12 @@ export default function Home() {
     setLoading(true);
 
     try {
-      const prompt = `Create a full-day itinerary for ${destination}. Interests: ${interests.join(
+      let prompt = `Create a full-day itinerary for ${destination.trim()}. Interests: ${interests.join(
         ", "
       )}.`;
+      if (notes.trim()) {
+        prompt += ` Additional notes: ${notes.trim()}`;
+      }
 
       const res = await fetch("/api/generate", {
         method: "POST",
@@ -106,11 +116,13 @@ export default function Home() {
         return;
       }
 
-      setResponse(typeof data?.responseText === "string" ? data.responseText : "");
+      const responseText =
+        typeof data?.responseText === "string" ? data.responseText : "";
+      setResponse(responseText);
 
+      let items: TimelineItem[] = [];
       if (Array.isArray(data?.timeline)) {
-        // Harden the payload for UI rendering.
-        const items: TimelineItem[] = data.timeline
+        items = data.timeline
           .filter((x) => x && typeof x === "object")
           .map((x) => {
             const record = x as Record<string, unknown>;
@@ -132,6 +144,21 @@ export default function Home() {
       } else {
         setTimeline([]);
       }
+
+      const entry: ChatHistoryEntry = {
+        id: crypto.randomUUID(),
+        createdAt: new Date().toISOString(),
+        destination: destination.trim(),
+        interests: [...interests],
+        notes: notes.trim() || undefined,
+        responseText,
+        timeline: items,
+      };
+      setHistory((prev) => {
+        const next = [entry, ...prev].slice(0, MAX_CHAT_HISTORY_ENTRIES);
+        saveChatHistory(next);
+        return next;
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Request failed.");
     } finally {
@@ -140,10 +167,24 @@ export default function Home() {
     }
   }
 
+  function applyHistoryEntry(entry: ChatHistoryEntry) {
+    setDestination(entry.destination);
+    setInterests([...entry.interests]);
+    setNotes(entry.notes ?? "");
+    setResponse(entry.responseText);
+    setTimeline(entry.timeline);
+    setError(null);
+  }
+
+  function handleClearHistory() {
+    setHistory([]);
+    clearChatHistoryStorage();
+  }
+
   return (
     <div className={styles.page}>
       <div className={styles.container}>
-        <h1 className={styles.title}>Travel Spotnana</h1>
+        <h1 className={styles.title}>Spotnana Planner</h1>
         <p className={styles.subtitle}>
           Enter a destination and choose up to 3 interests. We will generate a
           recommended day itinerary.
@@ -201,6 +242,8 @@ export default function Home() {
           <textarea
             className={styles.textarea}
             placeholder="Optional extra notes for the AI (budget, pace, etc.)"
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
           />
 
           <div className={styles.actions}>
@@ -253,6 +296,49 @@ export default function Home() {
             </div>
           ) : null}
         </div>
+
+        {history.length > 0 ? (
+          <section className={styles.historySection} aria-label="Past itineraries">
+            <div className={styles.historyHeader}>
+              <h2 className={styles.historyTitle}>Past itineraries</h2>
+              <button
+                type="button"
+                className={styles.historyClear}
+                onClick={handleClearHistory}
+              >
+                Clear history
+              </button>
+            </div>
+            <ul className={styles.historyList}>
+              {history.map((entry) => (
+                <li key={entry.id} className={styles.historyItem}>
+                  <button
+                    type="button"
+                    className={styles.historyItemButton}
+                    onClick={() => applyHistoryEntry(entry)}
+                  >
+                    <span className={styles.historyItemMeta}>
+                      {new Date(entry.createdAt).toLocaleString(undefined, {
+                        dateStyle: "medium",
+                        timeStyle: "short",
+                      })}
+                    </span>
+                    <span className={styles.historyItemDestination}>
+                      {entry.destination}
+                    </span>
+                    <span className={styles.historyItemInterests}>
+                      {entry.interests.join(" · ")}
+                    </span>
+                    <span className={styles.historyItemPreview}>
+                      {entry.responseText.slice(0, 120)}
+                      {entry.responseText.length > 120 ? "…" : ""}
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
       </div>
     </div>
   );
