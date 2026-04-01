@@ -23,7 +23,32 @@ const INTEREST_OPTIONS = [
   "Family-friendly",
 ];
 
+// Helper function to parse timeline data from API response
+function parseTimelineData(timelineData: unknown): TimelineItem[] {
+  if (!Array.isArray(timelineData)) return [];
+  return timelineData
+    .filter((x) => x && typeof x === "object")
+    .map((x) => {
+      const record = x as Record<string, unknown>;
+      return {
+        time: typeof record.time === "string" ? record.time : "",
+        title: typeof record.title === "string" ? record.title : "",
+        description:
+          typeof record.description === "string"
+            ? record.description
+            : undefined,
+        location:
+          typeof record.location === "string"
+            ? record.location
+            : undefined,
+      };
+    })
+    .filter((x) => x.time && x.title);
+}
+
+// Main component for the Spotnana Planner page
 export default function Home() {
+  // State variables for form inputs and UI state
   const [destination, setDestination] = useState("");
   const [notes, setNotes] = useState("");
   const [selectedInterest, setSelectedInterest] = useState("");
@@ -36,10 +61,12 @@ export default function Home() {
   /** Blocks duplicate submits before React re-renders (double-click / Enter spam). */
   const inFlightRef = useRef(false);
 
+  // Load chat history on component mount
   useEffect(() => {
     setHistory(loadChatHistory());
   }, []);
 
+  // Function to add an interest to the list, with validation
   function addInterest(value: string) {
     if (!value) return;
     if (interests.includes(value)) return;
@@ -52,10 +79,12 @@ export default function Home() {
     setSelectedInterest("");
   }
 
+  // Function to remove an interest from the list
   function removeInterest(value: string) {
     setInterests((prev) => prev.filter((item) => item !== value));
   }
 
+  // Async function to handle form submission and generate itinerary
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (inFlightRef.current) return;
@@ -120,30 +149,8 @@ export default function Home() {
         typeof data?.responseText === "string" ? data.responseText : "";
       setResponse(responseText);
 
-      let items: TimelineItem[] = [];
-      if (Array.isArray(data?.timeline)) {
-        items = data.timeline
-          .filter((x) => x && typeof x === "object")
-          .map((x) => {
-            const record = x as Record<string, unknown>;
-            return {
-              time: typeof record.time === "string" ? record.time : "",
-              title: typeof record.title === "string" ? record.title : "",
-              description:
-                typeof record.description === "string"
-                  ? record.description
-                  : undefined,
-              location:
-                typeof record.location === "string"
-                  ? record.location
-                  : undefined,
-            };
-          })
-          .filter((x) => x.time && x.title);
-        setTimeline(items);
-      } else {
-        setTimeline([]);
-      }
+      const items = parseTimelineData(data?.timeline);
+      setTimeline(items);
 
       const entry: ChatHistoryEntry = {
         id: crypto.randomUUID(),
@@ -167,6 +174,7 @@ export default function Home() {
     }
   }
 
+  // Function to apply a history entry to the current state
   function applyHistoryEntry(entry: ChatHistoryEntry) {
     setDestination(entry.destination);
     setInterests([...entry.interests]);
@@ -176,6 +184,7 @@ export default function Home() {
     setError(null);
   }
 
+  // Function to clear all state and history
   function handleClear() {
     if (loading) return;
     setResponse("");
@@ -189,6 +198,7 @@ export default function Home() {
     setSelectedInterest("");
   }
 
+  // Render the main UI
   return (
     <div className={styles.page}>
       <div className={styles.container}>
@@ -198,6 +208,7 @@ export default function Home() {
           recommended day itinerary.
         </p>
 
+        {/* Form: destination, interests, notes */}
         <form
           className={styles.form}
           onSubmit={handleSubmit}
@@ -275,6 +286,7 @@ export default function Home() {
           </div>
         </form>
 
+        {/* Loading, errors, AI summary, timeline */}
         <div className={styles.statusRow} aria-live="polite">
           {loading ? (
             <div className={styles.loadingRow}>
@@ -314,6 +326,7 @@ export default function Home() {
           ) : null}
         </div>
 
+        {/* Past itineraries from localStorage */}
         {history.length > 0 ? (
           <section className={styles.historySection} aria-label="Past itineraries">
             <div className={styles.historyHeader}>

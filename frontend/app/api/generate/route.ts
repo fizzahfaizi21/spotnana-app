@@ -44,7 +44,7 @@ export async function POST(req: Request) {
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
     const systemPrompt = [
-      "You are Travel Spotnana, a helpful travel itinerary planner.",
+      "You are Spotnana Planner, a helpful travel itinerary planner.",
       "Given the user's prompt (city and up to three interests), generate a full day schedule.",
       "Return STRICTLY valid JSON with EXACTLY these keys: responseText, timeline.",
       "timeline must be an array of items ordered by time.",
